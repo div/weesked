@@ -6,22 +6,25 @@ module Weesked
 
     describe '#run' do
       describe 'converts single datetime to Day' do
-        let(:sunday)    { Time.local(2020, 'jan', 5, hour, 17) }
-        let(:monday)    { Time.local(2020, 'jan', 6, hour, 12) }
-        let(:wednesday) { Time.local(2020, 'jan', 8, hour, 13) }
+
+
+        let(:dates) {
+          {
+            sunday:     Time.local(2020, 'jan', 5, hour, 17),
+            monday:     Time.local(2020, 'jan', 6, hour, 12),
+            wednesday:  Time.local(2020, 'jan', 8, hour, 13),
+          }
+        }
 
         describe 'with day hours' do
           let(:hour) { 14 }
 
-          [:sunday, :monday, :wednesday].each do |day|
-            subject { DayBuilder.new(eval(day.to_s)).run }
-            it 'is a Day' do
+          it 'returns correct day' do
+            dates.each_pair do |day, date|
+              subject = DayBuilder.new(date).run
+              date.wday.must_equal Weesked.availiable_days.index(day.to_s)
               subject.must_be_instance_of Day
-            end
-            it "has correct weekday: #{day}" do
               subject.day.must_equal day
-            end
-            it 'has correct step' do
               subject.steps.must_equal [ hour ]
             end
           end

@@ -42,9 +42,6 @@ module Weesked
         #     wd -= 1
         #   end
         # end
-        puts '====================='
-        puts date.inspect
-        puts wd.inspect
         Day.new(wd, step)
       end
 
