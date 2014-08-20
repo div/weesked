@@ -12,13 +12,13 @@ module Weesked
 
 
     # By default, 1.hour
-    DEFAULT_TIME_STEP = 3600
+    DEFAULT_TIME_STEP = 3600  # 1.hour
 
     # By default, the whole week
     DEFAULT_AVAILIABLE_DAYS = %w(sunday monday tuesday wednesday thursday friday saturday)
 
     # By default, whole day in hours
-    DEFAULT_AVAILIABLE_STEPS = (0..24).to_a
+    DEFAULT_AVAILIABLE_STEPS = (0..23).to_a
 
     # By default, we use astonomical day
     DEFAULT_STEPS_DAY_SHIFT = 0
