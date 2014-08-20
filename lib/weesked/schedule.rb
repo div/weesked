@@ -8,6 +8,7 @@ module Weesked
       def redis=(conn)
         @redis = conn
       end
+
       def redis
         @redis || $redis || Redis.current ||
           raise(NotConnected, "Redis not set to a Redis.new connection")
@@ -35,6 +36,13 @@ module Weesked
           downcase
       end
 
+      def weesked_schedule_key(day, step)
+        "availiability:class_name:#{day}:#{step}"
+      end
+
+      def availiable date
+      end
+
     end
 
     module InstanceMethods
@@ -42,61 +50,64 @@ module Weesked
         self.class.redis
       end
 
-      def weesked_key
-        if id.nil?
-          raise NilObjectId,
-            "Weesked schedule on class #{self.class.name} with nil id (unsaved record?) [object_id=#{object_id}]"
-        end
-        "#{redis_prefix(self.class)}:#{id}:#{name}"
-      end
-
       def schedule=(availiability_hash)
         @availiability_hash = availiability_hash
-        replace_sitter_availiability
-        replace_in_compound_availiability
+        update_schedule_for_instance
+        update_schedule_for_class
       end
 
       def schedule
-        @schedule = Availiability::DAYS.each_with_object(Hash.new) do |day, h|
-          h[day.to_sym] = redis.smembers(key(day)).map(&:to_i)
+        @schedule = Weesked.availiable_days.each_with_object(Hash.new) do |day, h|
+          h[day.to_sym] = redis.smembers(weesked_key(day)).map(&:to_i)
         end
+      end
+
+      def availiable? date
       end
 
       private
 
-        def replace_in_compound_availiability
+        def update_schedule_for_class
           sch = schedule
           redis.multi do
             Weesked.availiable_days.each do |day|
               Weesked.availiable_steps.each do |step|
-                redis.srem Availiability.key(day, set), id
-                redis.sadd Availiability.key(day, set), id if sch[day.to_sym].include?(set)
+                redis.srem self.class.weesked_schedule_key(day, step), id
+                redis.sadd self.class.weesked_schedule_key(day, step), id if sch[day.to_sym].include?(step)
               end
             end
           end
         end
 
-        def replace_availiability
-          clear_availiability
-          set_availiability
+        def update_schedule_for_instance
+          clear_schedule
+          set_schedule
         end
 
-        def clear_availiability
+        def clear_schedule
           redis.multi do
             Weesked.availiable_days.each do |day|
-              redis.del key(day)
+              redis.del weesked_key(day)
             end
           end
         end
 
-        def set_availiability
+        def set_schedule
           redis.multi do
-            Weesked.availiable_days.each do |day|
-              steps = availiability_hash.fetch day.to_sym
-              window = Window.new day, steps
-              redis.sadd(key(day), window.steps) if window.steps.any?
+            Weesked.availiable_days.each do |d|
+              steps = @availiability_hash.fetch d.to_sym
+              day = Day.new d, steps
+              redis.sadd(weesked_key(d), day.steps) if day.steps.any?
             end
           end
+        end
+
+        def weesked_key(day)
+          if id.nil?
+            raise NilObjectId,
+              "Weesked schedule on class #{self.class.name} with nil id (unsaved record?) [object_id=#{object_id}]"
+          end
+          "#{id}:#{day}"
         end
 
     end
