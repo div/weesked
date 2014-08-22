@@ -2,7 +2,7 @@
 
 # Weesked
 
-Simple weekely schedule based on redis lists
+Simple weekely schedule based on redis sets
 
 ## Installation
 
@@ -28,7 +28,7 @@ Or install it yourself as:
 
 Let's say that we run some small buisness, we've got several employees which provide some service to our customers. Customers book appointments with our employees. But each employee has her personal week schedule. Some work in the morning, some on weekends etc. So you want to know if this employee is availiable on tuesday at 18.00. We need to check his appointments if he is free at that time, and also we need to check his schedule if he is even availiable on that day. Figuring out appointments is easy - we've got postgres ranges for that. But the weekly schedule is a bit trickier. We could use the same ranges approach to make availibility schedule for the comming weeks, but we'll have to maintain some process to keep this shcedule updated and so on. Other option is to use some scheduling lib like ice_cube. But you wont be able to query all your employees availiability easely.
 
-Here comes weesked - redis weekly scheduler. Schedule is an array of redis lists, each list corresponds to time period in some incremets let's say an hour for now. So our week consists of 24*7=168 lists. We add our employee to a list to mark that she's not availiable at that time.
+Here comes weesked - redis weekly scheduler. Schedule is an array of redis sets, each list corresponds to time period in some incremets let's say an hour for now. So our week consists of 24*7=168 sets. We add our employee to a list to mark that she's not availiable at that time.
 
 ```ruby
 class Employee
