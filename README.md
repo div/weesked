@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/div/weesked.svg?branch=master)](https://travis-ci.org/div/weesked)
+
 # Weesked
 
 Simple weekely schedule based on redis lists
