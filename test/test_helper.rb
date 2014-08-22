@@ -6,14 +6,14 @@ require 'fakeredis'
 
 
 MONDAY_SUNDAY_12_14 = {
+  sunday: [ '12', '13', '14' ],
   monday: [ '12', '13', '14' ],
   tuesday: [ '12', '13', '14' ],
   wednesday: [ '12', '13', '14' ],
   thursday: [ '12', '13', '14' ],
   friday: [ '12', '13', '14' ],
   saturday: [ '12', '13', '14' ],
-  sunday: [ '12', '13', '14' ]
-}
+}.freeze
 
 EMPTY_AVAIL = {
   monday: [ ],

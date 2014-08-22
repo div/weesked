@@ -7,7 +7,7 @@ module Weesked
       DayBuilder.new(date).run
     end
 
-    def initialize(day, steps)
+    def initialize(day, steps=[])
       @steps = steps
       @day = if day.kind_of?(Integer)
         Weesked.availiable_days.fetch(day.to_i).to_sym
@@ -18,11 +18,7 @@ module Weesked
     end
 
     def steps
-      steps = if @steps == ''
-        []
-      else
-        Array(@steps).map(&:to_i)
-      end
+      steps = (Array(@steps)- ['', nil]).map(&:to_i)
       Weesked.availiable_steps&steps
     end
   end

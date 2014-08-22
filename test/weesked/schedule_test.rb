@@ -17,13 +17,12 @@ module Weesked
     subject { MyClass.new }
 
     let(:availiability) {
-      MONDAY_SUNDAY_12_14
+      MONDAY_SUNDAY_12_14.dup
     }
 
     let(:availiability_int) {
       availiability.each_with_object(Hash.new) do |k, h|
-        value = k.last.blank? ? [] : Array(k.last).map(&:to_i)
-        h[k.first] = value
+        h[k.first] = Array(k.last).map(&:to_i).sort.reverse
       end
     }
 
@@ -32,36 +31,41 @@ module Weesked
       subject.redis.must_equal '123'
     end
 
+    it 'has key' do
+      subject.weesked_key(:monday).must_equal 'weesked:myclass:1:monday'
+    end
+
     describe '.schedule=' do
 
       describe 'with date hash' do
+
         it 'saves to redis with strings' do
           subject.schedule = availiability
-          Redis.current.smembers(subject.schedule[:monday]).must_equal [ '12', '13', '14' ]
+          Redis.current.smembers(subject.weesked_key(:monday)).sort.must_equal [ '12', '13', '14' ]
         end
 
         it 'saves to redis with empty array' do
           availiability[:monday] = []
           subject.schedule = availiability
-          Redis.current.smembers(subject.schedule[:monday]).must_equal []
+          Redis.current.smembers(subject.weesked_key(:monday)).sort.must_equal []
         end
 
         it 'clears before save' do
           subject.schedule = availiability
           availiability[:monday] = [10]
           subject.schedule = availiability
-          Redis.current.smembers(subject.schedule[:monday]).must_equal [ '10' ]
+          Redis.current.smembers(subject.weesked_key(:monday)).sort.must_equal [ '10' ]
         end
 
-        it 'raises if not an array' do
+        it 'handles empty string' do
           availiability[:monday] = ''
           subject.schedule = availiability
-          Redis.current.smembers(subject.schedule[:monday]).must_equal []
+          Redis.current.smembers(subject.weesked_key(:monday)).sort.must_equal []
         end
 
         it 'saves to redis with ints' do
           subject.schedule = availiability_int
-          Redis.current.smembers(subject.schedule[:monday]).must_equal [ '12', '13', '14' ]
+          Redis.current.smembers(subject.weesked_key(:monday)).sort.must_equal [ '12', '13', '14' ]
         end
       end
     end

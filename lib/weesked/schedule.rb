@@ -37,7 +37,7 @@ module Weesked
       end
 
       def weesked_schedule_key(day, step)
-        "availiability:class_name:#{day}:#{step}"
+        "weesked:availiability:#{self.name.downcase}:#{day}:#{step}"
       end
 
       def availiable date
@@ -51,18 +51,27 @@ module Weesked
       end
 
       def schedule=(availiability_hash)
-        @availiability_hash = availiability_hash
-        update_schedule_for_instance
+        update_schedule_for_instance availiability_hash
         update_schedule_for_class
       end
 
       def schedule
-        @schedule = Weesked.availiable_days.each_with_object(Hash.new) do |day, h|
+        Weesked.availiable_days.each_with_object(Hash.new) do |day, h|
           h[day.to_sym] = redis.smembers(weesked_key(day)).map(&:to_i)
         end
       end
 
       def availiable? date
+      end
+
+      def weesked_key(day)
+        raise NilDay unless day
+        if id.nil?
+          raise NilObjectId,
+            "Weesked schedule on class #{self.class.name} with nil id (unsaved record?) [object_id=#{object_id}]"
+        end
+        day = Day.new(day).day
+        "weesked:#{self.class.name.downcase}:#{id}:#{day}"
       end
 
       private
@@ -79,35 +88,15 @@ module Weesked
           end
         end
 
-        def update_schedule_for_instance
-          clear_schedule
-          set_schedule
-        end
-
-        def clear_schedule
-          redis.multi do
-            Weesked.availiable_days.each do |day|
-              redis.del weesked_key(day)
-            end
-          end
-        end
-
-        def set_schedule
+        def update_schedule_for_instance hash
           redis.multi do
             Weesked.availiable_days.each do |d|
-              steps = @availiability_hash.fetch d.to_sym
+              redis.del weesked_key(d)
+              steps = hash.fetch d.to_sym
               day = Day.new d, steps
               redis.sadd(weesked_key(d), day.steps) if day.steps.any?
             end
           end
-        end
-
-        def weesked_key(day)
-          if id.nil?
-            raise NilObjectId,
-              "Weesked schedule on class #{self.class.name} with nil id (unsaved record?) [object_id=#{object_id}]"
-          end
-          "#{id}:#{day}"
         end
 
     end
