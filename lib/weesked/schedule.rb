@@ -43,6 +43,16 @@ module Weesked
       def availiable date
       end
 
+      def reset_schedule
+        redis.multi do
+          Weesked.availiable_days.each do |day|
+            Weesked.availiable_steps.each do |step|
+              redis.del weesked_schedule_key(day, step)
+            end
+          end
+        end
+      end
+
     end
 
     module InstanceMethods
@@ -81,8 +91,12 @@ module Weesked
           redis.multi do
             Weesked.availiable_days.each do |day|
               Weesked.availiable_steps.each do |step|
-                redis.srem self.class.weesked_schedule_key(day, step), id
-                redis.sadd self.class.weesked_schedule_key(day, step), id if sch[day.to_sym].include?(step)
+                if sch[day.to_sym].include?(step)
+                  # puts "!!!!!!!!!!!!!!! adding #{id} to #{self.class.weesked_schedule_key(day, step)}"
+                  redis.sadd self.class.weesked_schedule_key(day, step), id
+                else
+                  redis.srem self.class.weesked_schedule_key(day, step), id
+                end
               end
             end
           end

@@ -26,9 +26,13 @@ module Weesked
       end
     }
 
-    it '.redis' do
+    it '#redis' do
       MyClass.redis = '123'
       subject.redis.must_equal '123'
+    end
+
+    it '#weesked_schedule_key' do
+      MyClass.weesked_schedule_key(:monday, 10).must_equal 'weesked:availiability:myclass:monday:10'
     end
 
     it 'has key' do
@@ -41,20 +45,20 @@ module Weesked
 
         it 'saves to redis with strings' do
           subject.schedule = availiability
-          Redis.current.smembers(subject.weesked_key(:monday)).sort.must_equal [ '12', '13', '14' ]
+          Redis.current.smembers(subject.weesked_key(:monday)).sort.must_equal availiability[:monday].map(&:to_s)
         end
 
         it 'saves to redis with empty array' do
           availiability[:monday] = []
           subject.schedule = availiability
-          Redis.current.smembers(subject.weesked_key(:monday)).sort.must_equal []
+          Redis.current.smembers(subject.weesked_key(:monday)).sort.must_equal availiability[:monday].map(&:to_s)
         end
 
         it 'clears before save' do
           subject.schedule = availiability
           availiability[:monday] = [10]
           subject.schedule = availiability
-          Redis.current.smembers(subject.weesked_key(:monday)).sort.must_equal [ '10' ]
+          Redis.current.smembers(subject.weesked_key(:monday)).sort.must_equal availiability[:monday].map(&:to_s)
         end
 
         it 'handles empty string' do
@@ -65,7 +69,7 @@ module Weesked
 
         it 'saves to redis with ints' do
           subject.schedule = availiability_int
-          Redis.current.smembers(subject.weesked_key(:monday)).sort.must_equal [ '12', '13', '14' ]
+          Redis.current.smembers(subject.weesked_key(:monday)).sort.must_equal availiability[:monday].map(&:to_s)
         end
       end
     end
@@ -78,5 +82,6 @@ module Weesked
       end
 
     end
+
   end
 end
