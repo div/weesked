@@ -1,4 +1,3 @@
-require 'pry'
 module Weesked
 
   class DateNotRecognized < StandardError; end
