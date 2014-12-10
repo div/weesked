@@ -1,16 +1,10 @@
+require 'pry'
 module Weesked
 
   class DateNotRecognized < StandardError; end
-  class NotAvailiable
-    def day; nil; end
-    def steps; nil; end
-  end
+  class NotAvailiable < StandardError; end
 
   class DayBuilder
-
-    MINUTES_IN_HOUR = 60
-    SECONDS_IN_MINUTE = 60
-    SECONDS_IN_HOUR = MINUTES_IN_HOUR * SECONDS_IN_MINUTE
 
     def initialize dates
       @dates = dates
@@ -34,24 +28,29 @@ module Weesked
         wd = date.wday
         time = beginning_of_step date
         step = step_index time
-        return NotAvailiable.new unless Weesked.availiable_steps.include? step
-        # if false
-        #   if wd == SUNDAY
-        #     wd = SATURDAY
-        #   else
-        #     wd -= 1
-        #   end
-        # end
+        raise NotAvailiable unless Weesked.availiable_steps.include? step
+        if step < Weesked.steps_day_shift
+          if wd == SUNDAY
+            wd = SATURDAY
+          else
+            wd -= 1
+          end
+        end
         Day.new(wd, step)
       end
 
       def build_from_date_range
-        return NotAvailiable.new unless dates.begin.day == dates.end.day
         start = build_from_single_date dates.begin
         ending = build_from_single_date dates.end
+        raise NotAvailiable unless start.day == ending.day
         i_start = Weesked.availiable_steps.index start.steps.first
         i_end = Weesked.availiable_steps.index ending.steps.first
-        Day.new start.day, Weesked.availiable_steps.slice(i_start..i_end)
+        array = if Weesked.steps_day_shift > 0 && i_start > i_end
+          Weesked.availiable_steps.slice(i_start..-1) + Weesked.availiable_steps.slice(0..i_end)
+        else
+          Weesked.availiable_steps.slice(i_start..i_end)
+        end
+        Day.new start.day, array
       end
 
       def beginning_of_step time

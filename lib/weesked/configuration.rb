@@ -1,6 +1,12 @@
 require File.expand_path('../version', __FILE__)
 
 module Weesked
+  MINUTES_IN_HOUR = 60
+  SECONDS_IN_MINUTE = 60
+  SECONDS_IN_HOUR = MINUTES_IN_HOUR * SECONDS_IN_MINUTE
+  SUNDAY = 0
+  SATURDAY = 6
+
   module Configuration
     VALID_OPTIONS_KEYS = [
       :time_step,
@@ -12,7 +18,7 @@ module Weesked
 
 
     # By default, 1.hour
-    DEFAULT_TIME_STEP = 3600  # 1.hour
+    DEFAULT_TIME_STEP = SECONDS_IN_HOUR  # 1.hour
 
     # By default, the whole week
     DEFAULT_AVAILIABLE_DAYS = %w(sunday monday tuesday wednesday thursday friday saturday)

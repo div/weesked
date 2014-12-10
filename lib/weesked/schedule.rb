@@ -65,10 +65,9 @@ module Weesked
         update_schedule_for_class
       end
 
-      def schedule
-        Weesked.availiable_days.each_with_object(Hash.new) do |day, h|
-          h[day.to_sym] = redis.smembers(weesked_key(day)).map(&:to_i)
-        end
+      def schedule(range=false)
+        return get_schedule unless range
+        Hash[get_schedule.map {|k,v| [k, OffsetHandler.new(v, Weesked.steps_day_shift, 24).to_range] }]
       end
 
       def availiable? date
@@ -92,7 +91,6 @@ module Weesked
             Weesked.availiable_days.each do |day|
               Weesked.availiable_steps.each do |step|
                 if sch[day.to_sym].include?(step)
-                  # puts "!!!!!!!!!!!!!!! adding #{id} to #{self.class.weesked_schedule_key(day, step)}"
                   redis.sadd self.class.weesked_schedule_key(day, step), id
                 else
                   redis.srem self.class.weesked_schedule_key(day, step), id
@@ -110,6 +108,12 @@ module Weesked
               day = Day.new d, steps
               redis.sadd(weesked_key(d), day.steps) if day.steps.any?
             end
+          end
+        end
+
+        def get_schedule
+          Weesked.availiable_days.each_with_object(Hash.new) do |day, h|
+            h[day.to_sym] = redis.smembers(weesked_key(day)).map(&:to_i)
           end
         end
 
