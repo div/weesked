@@ -9,7 +9,8 @@ module Weesked
 
     def to_a
       return ary if ary.length == 0 || offset == 0
-      ary.push(ary.shift(offset)).flatten
+      shift_offset = ary.take_while {|n| n < offset}.length
+      ary.push(ary.shift(shift_offset)).flatten
     end
 
     def to_range
